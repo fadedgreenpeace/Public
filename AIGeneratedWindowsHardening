@@ -1,0 +1,337 @@
+
+
+# Set the local administrator password to a strong, unique value
+$adminPassword = ConvertTo-SecureString 'MyStR0ngP@55w0rd!' -AsPlainText -Force
+Set-LocalUser -Name "Administrator" -Password $adminPassword
+
+# Rename the local administrator account
+Rename-LocalUser -Name "Administrator" -NewName "admin"
+
+# Enable the built-in Administrator account and set its password
+Enable-LocalUser -Name "Administrator"
+Set-LocalUser -Name "Administrator" -Password $adminPassword
+
+# Enable the Windows Firewall and set it to block all incoming connections
+Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+Set-NetFirewallRule -Name "*" -Action Block
+
+# Enable auditing for logon events
+Auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+
+# Enable auditing for account management events
+Auditpol /set /subcategory:"Account Management" /success:enable /failure:enable
+
+# Enable auditing for process tracking events
+Auditpol /set /subcategory:"Detailed Tracking" /success:enable /failure:enable
+
+# Enable the built-in Windows Defender Antivirus
+Set-MpPreference -EnableRealtimeMonitoring $true
+
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "LocalAccountTokenFilterPolicy" -Value 1
+
+# Disable Remote Desktop access
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 1
+
+# Disable the Windows Remote Management (WinRM) service
+Set-Service -Name "WinRM" -StartupType Disabled
+
+# Disable the Windows Internet Information Services (IIS) service
+Stop-Service -Name "W3SVC"
+Set-Service -Name "W3SVC" -StartupType Disabled
+
+# Set the password policy to require strong passwords
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordComplexity" -Value 1
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordLength" -Value 14
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordAgeDays" -Value 90
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "ClearTextPassword" -Value 0
+
+# Set the account lockout policy to lock out accounts after 5 failed login attempts
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LockoutThreshold" -Value 5
+
+# Enable auditing for object access events
+Auditpol /set /subcategory:"Object Access" /success:enable /failure:enable
+
+# Enable the User Account Control (UAC) feature
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "ConsentPromptBehaviorAdmin" -Value 2
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "PromptOnSecureDesktop" -Value 1
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "EnableLUA" -Value 1
+
+# Enable auditing for privilege use events
+Auditpol /set /subcategory:"Privilege Use" /success:enable /failure:enable
+
+# Enable auditing for system events
+Auditpol /set /subcategory:"System" /success:enable /failure:enable
+
+# Enable auditing for security group management events
+Auditpol /set /subcategory:"Security Group Management" /success:enable /failure:enable
+
+# Enable auditing for system integrity events
+Auditpol /set /subcategory:"System Integrity" /success:enable /failure:enable
+
+# Enable auditing for IPsec events
+Auditpol /set /subcategory:"IPsec Driver" /success:enable /failure:enable
+
+# Enable auditing for other policy changes events
+Auditpol /set /subcategory:"Other Policy Change Events" /success:enable /failure:enable
+
+# Enable auditing for application group management events
+Auditpol /set /subcategory:"Application Group Management" /success:enable /failure:enable
+
+# Enable auditing for centralized key management events
+Auditpol /set /subcategory:"Centralized Key Management" /success:enable /failure:enable
+
+# Disable the Guest account
+Set-LocalUser -Name "Guest" -Enabled $false
+
+# Remove the Guest account from the Administrators group
+$guest = Get-LocalUser -Name "Guest"
+$adminGroup = [ADSI]"WinNT://./Administrators,group"
+$adminGroup.Remove($guest.SID)
+
+# Remove the Everyone group from the access control list (ACL) of the root folder
+$acl = Get-Acl -Path "C:\"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "C:\" -AclObject $acl
+
+# Remove the Everyone group from the ACL of the SystemDrive folder
+$acl = Get-Acl -Path "$env:SystemDrive\"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "$env:SystemDrive\" -AclObject $acl
+
+# Remove the Everyone group from the ACL of the Windows folder
+$acl = Get-Acl -Path "$env:SystemRoot"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "$env:SystemRoot" -AclObject $acl
+
+# Set the screen saver timeout to 10 minutes
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ScreenSaveTimeOut" -Value 600
+
+# Set the screen saver to a blank screen
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "SCRNSAVE.EXE" -Value "C:\Windows\System32\scrnsave.scr"
+
+# Enable auditing for security state change events
+Auditpol /set /subcategory:"Security State Change" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for system initialization events
+Auditpol /set /subcategory:"System Initialization" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for system initialization events
+Auditpol /set /subcategory:"System Initialization" /success:enable /failure:enable
+
+# Enable auditing for logon events
+Auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+
+# Enable auditing for account management events
+Auditpol /set /subcategory:"Account Management" /success:enable /failure:enable
+
+# Enable auditing for process tracking events
+Auditpol /set /subcategory:"Detailed Tracking" /success:enable /failure:enable
+
+# Enable the built-in Windows Defender Antivirus
+Set-MpPreference -EnableRealtimeMonitoring $true
+
+# Disable anonymous access to the system
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "LocalAccountTokenFilterPolicy" -Value 1
+
+# Disable Remote Desktop access
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 1
+
+# Disable the Windows Remote Management (WinRM) service
+Set-Service -Name "WinRM" -StartupType Disabled
+
+# Disable the Windows Internet Information Services (IIS) service
+Stop-Service -Name "W3SVC"
+Set-Service -Name "W3SVC" -StartupType Disabled
+
+# Set the password policy to require strong passwords
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordComplexity" -Value 1
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordLength" -Value 14
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordAgeDays" -Value 90
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "ClearTextPassword" -Value 0
+
+# Set the account lockout policy to lock out accounts after 5 failed login attempts
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LockoutThreshold" -Value 5
+
+# Enable auditing for object access events
+Auditpol /set /subcategory:"Object Access" /success:enable /failure:enable
+
+# Enable the User Account Control (UAC) feature
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "ConsentPromptBehaviorAdmin" -Value 2
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "PromptOnSecureDesktop" -Value 1
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "EnableLUA" -Value 1
+
+# Enable auditing for privilege use events
+Auditpol /set /subcategory:"Privilege Use" /success:enable /failure:enable
+
+# Enable auditing for system events
+Auditpol /set /subcategory:"System" /success:enable /failure:enable
+
+# Enable auditing for security group management events
+Auditpol /set /subcategory:"Security Group Management" /success:enable /failure:enable
+
+# Enable auditing for system integrity events
+Auditpol /set /subcategory:"System Integrity" /success:enable /failure:enable
+
+# Enable auditing for IPsec events
+Auditpol /set /subcategory:"IPsec Driver" /success:enable /failure:enable
+
+# Enable auditing for other policy changes events
+Auditpol /set /subcategory:"Other Policy Change Events" /success:enable /failure:enable
+
+# Enable auditing for application group management events
+Auditpol /set /subcategory:"Application Group Management" /success:enable /failure:enable
+
+# Enable auditing for centralized key management events
+Auditpol /set /subcategory:"Centralized Key Management
+
+# Enable auditing for centralized key management events
+Auditpol /set /subcategory:"Centralized Key Management" /success:enable /failure:enable
+
+# Disable the Guest account
+Set-LocalUser -Name "Guest" -Enabled $false
+
+# Remove the Guest account from the Administrators group
+$guest = Get-LocalUser -Name "Guest"
+$adminGroup = [ADSI]"WinNT://./Administrators,group"
+$adminGroup.Remove($guest.SID)
+
+# Remove the Everyone group from the access control list (ACL) of the root folder
+$acl = Get-Acl -Path "C:\"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "C:\" -AclObject $acl
+
+# Remove the Everyone group from the ACL of the SystemDrive folder
+$acl = Get-Acl -Path "$env:SystemDrive\"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "$env:SystemDrive\" -AclObject $acl
+
+# Remove the Everyone group from the ACL of the Windows folder
+$acl = Get-Acl -Path "$env:SystemRoot"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "$env:SystemRoot" -AclObject $acl
+
+# Set the screen saver timeout to 10 minutes
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ScreenSaveTimeOut" -Value 600
+
+# Set the screen saver to a blank screen
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "SCRNSAVE.EXE" -Value "C:\Windows\System32\scrnsave.scr"
+
+# Enable auditing for security state change events
+Auditpol /set /subcategory:"Security State Change" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for system initialization events
+Auditpol /set /subcategory:"System Initialization" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for system initialization events
+Auditpol /set /subcategory:"System Initialization" /success:enable /failure:enable
+
+# Enable auditing for logon events
+Auditpol /set /subcategory:"Logon" /success:enable /failure:enable
+
+# Enable auditing for account management events
+Auditpol /set /subcategory:"Account Management" /success:enable /failure:enable
+
+# Enable auditing for process tracking events
+Auditpol /set /subcategory:"Detailed Tracking" /success:enable /failure:enable
+
+# Enable the built-in Windows Defender Antivirus
+Set-MpPreference -EnableRealtimeMonitoring $true
+
+# Disable anonymous access to the system
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "LocalAccountTokenFilterPolicy" -Value 1
+
+# Disable Remote Desktop access
+Set-ItemProperty -Path "HKLM:\System\CurrentControlSet\Control\Terminal Server" -Name "fDenyTSConnections" -Value 1
+
+# Disable the Windows Remote Management (WinRM) service
+Set-Service -Name "WinRM" -StartupType Disabled
+
+# Disable the Windows Internet Information Services (IIS) service
+Stop-Service -Name "W3SVC"
+Set-Service -Name "W3SVC" -StartupType Disabled
+
+# Set the password policy to require strong passwords
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordComplexity" -Value 1
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordLength" -Value 14
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "PasswordAgeDays" -Value 90
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\PasswordControl" -Name "ClearTextPassword" -Value 0
+
+# Set the account lockout policy to lock out accounts after 5 failed login attempts
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "LockoutThreshold" -Value 5
+
+# Enable auditing for object access events
+Auditpol /set /subcategory:"Object Access" /success:enable /failure:enable
+
+# Enable the User Account Control (UAC) feature
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "ConsentPromptBehaviorAdmin" -Value 2
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "PromptOnSecureDesktop" -Value 1
+Set-ItemProperty -Path HKLM:\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name "EnableLUA" -Value 1
+
+# Remove the Everyone group from the access control list (ACL) of the root folder
+$acl = Get-Acl -Path "C:\"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "C:\" -AclObject $acl
+
+# Remove the Everyone group from the ACL of the SystemDrive folder
+$acl = Get-Acl -Path "$env:SystemDrive\"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "$env:SystemDrive\" -AclObject $acl
+
+# Remove the Everyone group from the ACL of the Windows folder
+$acl = Get-Acl -Path "$env:SystemRoot"
+$everyoneSid = New-Object System.Security.Principal.SecurityIdentifier("S-1-1-0")
+$accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule($everyoneSid, "ReadAndExecute", "Allow", "None", "None")
+$acl.RemoveAccessRule($accessRule)
+Set-Acl -Path "$env:SystemRoot" -AclObject $acl
+
+# Set the screen saver timeout to 10 minutes
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "ScreenSaveTimeOut" -Value 600
+
+# Set the screen saver to a blank screen
+Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "SCRNSAVE.EXE" -Value "C:\Windows\System32\scrnsave.scr"
+
+# Enable auditing for security state change events
+Auditpol /set /subcategory:"Security State Change" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension" /success:enable /failure:enable
+
+# Enable auditing for system initialization events
+Auditpol /set /subcategory:"System Initialization" /success:enable /failure:enable
+
+# Enable auditing for security system extension events
+Auditpol /set /subcategory:"Security System Extension"
